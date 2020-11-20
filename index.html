@@ -1,0 +1,455 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="d3.js"></script>
+
+    <script src="d3.min.js"></script>
+    <script src="d3-legend.min.js"></script>
+    <script src="d3-legend.js"></script>
+    <style>
+
+    #tooltip {
+        position: absolute;
+        display: none;
+        background: rgba(233, 226, 226, 0.7);
+        border-radius: 3px;
+        box-shadow: -3px 3px 15px #939393;
+        color: black;
+        padding: 6px;
+        font-family: "Merriweather";
+        font-size: 1.3em;
+        
+        z-index: 100;
+      }
+      #mmLegend {
+        position: relative;
+        display: inline-block;
+       
+        top: 80px;
+        z-index: 99;
+        margin-right: 10px;
+        opacity: 1;
+      
+        stroke: black;
+       ;
+        
+      }
+      #selectButton {
+        position: relative;
+        z-index: 99;
+        top:20px;
+        font-size: 1.3em;
+        
+      }
+      #selectButton1 {
+        position: relative;
+        z-index: 100;
+        top:20px;
+        font-size: 1.3em;
+        
+      }
+      #selectButton2 {
+        position: relative;
+        z-index: 100;
+        top:20px;
+        font-size: 1.3em;
+        
+      }
+      svg path:hover {
+        cursor: pointer;
+      }
+
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+    </style>
+</head>
+<body>
+    <select name='Select Year' id="selectButton" class="sb">        <option value="start"> 
+        ------ Select a Year ------
+      </option>
+    <option value='2018'>2018</option>
+    <option value='2019'>2019</option> </select>
+    <select name='Select Plan' id="selectButton1"class='sb'>        <option value="start"> 
+        ------ Select a Plan ------
+      </option>
+    <option value='Plan A'>Plan A</option>
+    <option value='Plan B'>Plan B</option>
+    <option value='Plan C'>Plan C</option> </select>
+    <select name='Select Variable' id="selectButton2"class="sb">        <option value="start"> 
+        ------ Select a Vairable ------
+      </option>
+    <option value='MM'>Member Months</option>
+    <option value='PMPM'>PMPM</option>
+    <option value='ER'>ER Visits</option>
+    <option value='Admits'>Admits</option>
+    <option value='Days Admits'>Days Admits</option> </select>
+    <div id="tooltip"></div>
+    <div id="container" class="svg-container">
+    <div id="mmLegend"></div>
+      
+    </div>
+<script>
+
+var svg = d3.select("div#container")
+  .append("svg")
+  .attr("preserveAspectRatio", "xMinYMin meet")
+  .attr("viewBox", "-80 -200 2000 1000")
+  .classed("svg-content", true);
+
+var projection = d3
+        .geoMercator()
+        .center([-120.38, 37.44])
+        .scale(4000);
+
+path = d3.geoPath().projection(projection);
+d3.json("health_final.geojson").then(function (data) {
+    dataset = data
+        svg
+          .selectAll("path")
+          .data(data.features)
+          .enter()
+          .append("path")
+          .attr("id", "main")
+          .attr("d", path)
+          .attr("opacity", 0.5)
+          .attr("fill", 
+          "#D6D6D6")
+          .attr("stroke", "black")
+          .on("mouseover", mouseOver)
+          .on("mouseout", mouseOut)
+          function mouseOver(d, i) {
+          
+          console.log("hi");
+          d3.select(this)
+            .transition("mouseover")
+            .duration(0)
+            .attr('stroke-width',3)
+        
+    
+          d3
+            .select("#tooltip").style("left", function(){
+             
+             if((d3.event.pageX+10+50)>window.innerWidth)
+             {
+                return d3.event.pageX + 10 + -500+ "px"
+                console.log('big')}
+             else
+              {
+                return d3.event.pageX + 10 + "px"
+                console.log('small')
+          
+              }})
+          
+                      .style("top", d3.event.pageY  + "px")
+                      .style("display", "inline-block")
+        
+            .html(`<strong>County:</strong> ${(d.properties.NAMELSAD)}<br>
+            <strong>2018 Member Months:</strong><br>
+            Plan A -  ${(d.properties.mm_a18)} <br>
+            Plan B - ${(d.properties.mm_b18)} <br>
+            Plan C -  ${(d.properties.mm_c18)} <br>
+            <strong>2019 Member Months:</strong><br>
+            Plan A - ${(d.properties.mm_a19)} <br>
+            Plan B - ${(d.properties.mm_b19)} <br>
+            Plan C -${(d.properties.mm_c19)} <br>
+            `)
+                      }
+      function mouseOut(d, i) {
+          d3.select("#tooltip").style('display','none');
+          d3.select(this)
+            .transition("mouseout")
+            .duration(0)
+            .attr('stroke-width',1)
+            
+            ;
+        }
+      });
+      d3.selectAll('.sb')
+  
+  .on('change', function(){
+
+d3.selectAll('#main')
+.transition()
+.attr('fill',function(d){
+if (
+d3.select('#selectButton').property('value') === '2018' 
+& d3.select('#selectButton1').property('value') === 'Plan A'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_a18 <= 4000 & d.properties.mm_a18 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_a18 > 4000 & d.properties.mm_a18 <= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_a18> 126000 & d.properties.mm_a18 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_a18 > 402000 & d.properties.mm_a18 <= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_a18 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_a18 === null){
+            return  "#D6D6D6"
+        }
+    }
+    else if (
+d3.select('#selectButton').property('value') === '2019' 
+& d3.select('#selectButton1').property('value') === 'Plan A'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_a19 <= 4000 & d.properties.mm_a19 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_a19 > 4000 & d.properties.mm_a19<= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_a19 > 126000 & d.properties.mm_a19 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_a19 > 402000 & d.properties.mm_a19<= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_a19 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_a19 === null){
+            return  "#D6D6D6"
+        }
+    }
+  else  if( 
+d3.select('#selectButton').property('value') === '2018' 
+& d3.select('#selectButton1').property('value') === 'Plan B'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_b18 <= 4000 & d.properties.mm_b18 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_b18 > 4000 & d.properties.mm_b18 <= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_b18 > 126000 & d.properties.mm_b18 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_b18 > 402000 & d.properties.mm_b18 <= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_b18 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_b18 === null){
+            return  "#D6D6D6"
+        }
+    }
+   else  if( 
+d3.select('#selectButton').property('value') === '2019' 
+& d3.select('#selectButton1').property('value') === 'Plan B'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_b19 <= 4000 & d.properties.mm_b19 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_b19 > 4000 & d.properties.mm_b19<= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_b19> 126000 & d.properties.mm_b19 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_b19 > 402000 & d.properties.mm_b19 <= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_b19 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_b19 === null){
+            return  "#D6D6D6"
+        }
+    }
+  else   if( 
+d3.select('#selectButton').property('value') === '2018' 
+& d3.select('#selectButton1').property('value') === 'Plan C'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_c18 <= 4000 & d.properties.mm_c18 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_c18 > 4000 & d.properties.mm_c18 <= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_c18 > 126000 & d.properties.mm_c18 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_c18 > 402000 & d.properties.mm_c18<= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_c18 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_c18 === null){
+            return  "#D6D6D6"
+        }
+    }
+    
+   else  if( 
+d3.select('#selectButton').property('value') === '2019' 
+& d3.select('#selectButton1').property('value') === 'Plan C'
+& d3.select('#selectButton2').property('value') === 'MM' )
+{
+        if(d.properties.mm_c19 <= 4000 & d.properties.mm_c19 != null){
+            return '#ffffcc'
+        }
+        else if(d.properties.mm_c19 > 4000 & d.properties.mm_c19 <= 126000){
+            return '#a1dab4'
+        }
+        else if(d.properties.mm_c19 > 126000 & d.properties.mm_c19 <= 402000){
+            return '#41b6c4'
+        }
+        else if(d.properties.mm_c19 > 402000 & d.properties.mm_c19 <= 937000){
+            return '#2c7fb8'
+        }
+        else if(d.properties.mm_c19 > 937000){
+            return '#253494'
+        }
+        else if(d.properties.mm_c19 === null){
+            return  "#D6D6D6"
+        }
+    }
+    
+  })})
+  var mmLegend = d3
+          .select("#mmLegend")
+          .append("svg")
+          .attr("height", 600)
+          .attr("width", 300)
+          .attr("opacity", 1);
+          mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+          
+          .attr("y", 0)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill','#ffffcc')
+        mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+          
+          .attr("y", 40)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill','#a1dab4')
+          
+          mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+          
+          .attr("y", 80)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill','#41b6c4')
+          mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+         
+          .attr("y", 120)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill','#2c7fb8')
+          mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+         
+          .attr("y", 160)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill','#253494')
+          mmLegend
+          .append("rect")
+          .attr("id", "mmleg")
+          .attr("class", "leg1")
+          .attr("y", 200)
+          .attr("height", 30)
+          .attr('width',30)
+          .attr('fill',"#D6D6D6")
+          .append('text')
+          .attr('x',50)
+          .attr('y',20)
+          .attr('position','relative')
+          .text('hi')
+          d3.selectAll('#mmleg')
+          .attr('x',10)
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',20)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .attr('font-color','black')
+          .text('< 4K')
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',60)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .text('4K - 126K')
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',100)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .text('126K - 402K')
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',140)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .text('402K - 937K')
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',180)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .attr('font-weight',100)
+          .text('> 937K')
+          mmLegend.append('text')
+          .attr('x',50)
+          .attr('y',220)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .attr('font-weight',100)
+          .text('N/A')
+          mmLegend.append('text')
+          .attr('x',10)
+          .attr('y',-20)
+          .attr('position','relative')
+          .attr('font-size','1.2em')
+          .attr('font-weight',100)
+          
+          .text('Monthy Members')
+         
+          mmLegend.selectAll('rect').attr("transform", "translate(" + 0 + ", " + 60 + ")")
+          mmLegend.selectAll('text').attr("transform", "translate(" + 0 + ", " + 60 + ")")
+
+</script>
+</body>
+
+</html>
